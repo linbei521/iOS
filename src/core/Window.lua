@@ -1,8 +1,3 @@
--- iOS Window implementation
-local View = require(script.Parent.View)
-local Renderer = require(script.Parent.Renderer)
-local SafeArea = require(script.Parent.Parent.layout.SafeArea)
-
 local Window = {}
 Window.__index = Window
 setmetatable(Window, {__index = View})
