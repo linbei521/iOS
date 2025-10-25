@@ -1,6 +1,6 @@
 --[[
-    iOS风格UI框架 - 核心类
-    提供创建和管理UI的核心功能
+    iOS风格UI框架 - 核心类（简化版）
+    暂时移除TabBar，先让基础功能运行
 ]]
 
 local UIFramework = {}
@@ -31,7 +31,8 @@ function UIFramework.new(config)
     self.CurrentPage = nil
     self.IsVisible = false
     
-    -- ⚠️ 先加载组件和导航模块，再初始化UI
+    -- 加载组件
+    print("[UIFramework] Loading components...")
     self.Components = {
         Button = _G.LoadUIModule("src/components/Button.lua"),
         Toggle = _G.LoadUIModule("src/components/Toggle.lua"),
@@ -40,15 +41,12 @@ function UIFramework.new(config)
         List = _G.LoadUIModule("src/components/List.lua"),
         SegmentedControl = _G.LoadUIModule("src/components/SegmentedControl.lua"),
     }
+    print("[UIFramework] Components loaded!")
     
-    self.Navigation = {
-        TabBar = _G.LoadUIModule("src/navigation/TabBar.lua"),
-        PageManager = _G.LoadUIModule("src/navigation/PageManager.lua"),
-    }
-    
-    -- 现在可以安全地初始化UI了
+    -- 初始化UI
     self:_Initialize()
     
+    print("[UIFramework] Initialized: " .. self.Name)
     return self
 end
 
@@ -60,7 +58,7 @@ function UIFramework:_Initialize()
     self.ScreenGui.ResetOnSpawn = false
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     self.ScreenGui.IgnoreGuiInset = true
-    self.ScreenGui.Enabled = false
+    self.ScreenGui.Enabled = true  -- 默认显示
     self.ScreenGui.Parent = self.Parent
     
     -- 主容器
@@ -75,26 +73,25 @@ function UIFramework:_Initialize()
     -- 安全区域适配
     ScreenAdapter.ApplySafeArea(self.Container)
     
-    -- 页面容器
+    -- 页面容器（暂时不留TabBar空间）
     self.PageContainer = Instance.new("Frame")
     self.PageContainer.Name = "PageContainer"
-    self.PageContainer.Size = UDim2.new(1, 0, 1, -70) -- 留出TabBar空间
+    self.PageContainer.Size = UDim2.new(1, 0, 1, 0)  -- 全屏
     self.PageContainer.Position = UDim2.new(0, 0, 0, 0)
     self.PageContainer.BackgroundTransparency = 1
     self.PageContainer.Parent = self.Container
     
-    -- 初始化TabBar（现在 self.Navigation 已经存在了）
-    self.TabBar = self.Navigation.TabBar.new(self.Container, self.Theme)
-    self.TabBar.OnTabChanged = function(tabName)
-        self:ShowPage(tabName)
-    end
+    self.IsVisible = true
 end
 
 -- 创建页面
 function UIFramework:CreatePage(name, title, icon)
     if self.Pages[name] then
-        return self.Pages[name]
+        warn("[UIFramework] Page already exists: " .. name)
+        return self.Pages[name].Container
     end
+    
+    print("[UIFramework] Creating page: " .. name)
     
     local PageModule = _G.LoadUIModule("src/components/Page.lua")
     local page = PageModule.new(self.PageContainer, {
@@ -105,8 +102,12 @@ function UIFramework:CreatePage(name, title, icon)
     
     self.Pages[name] = page
     
-    -- 添加到TabBar
-    self.TabBar:AddTab(name, title or name, icon or "rbxassetid://7733674079")
+    -- 自动显示第一个页面
+    if not self.CurrentPage then
+        page.Container.Visible = true
+        self.CurrentPage = page
+        print("[UIFramework] Set as default page: " .. name)
+    end
     
     return page.Container
 end
@@ -115,17 +116,21 @@ end
 function UIFramework:ShowPage(name)
     local targetPage = self.Pages[name]
     if not targetPage then
-        warn("Page not found: " .. name)
+        warn("[UIFramework] Page not found: " .. name)
         return
     end
     
-    -- 隐藏当前页面
-    if self.CurrentPage and self.CurrentPage ~= targetPage then
-        self.Animations.FadeOut(self.CurrentPage.Container, 0.2)
+    print("[UIFramework] Showing page: " .. name)
+    
+    -- 隐藏所有页面
+    for pageName, page in pairs(self.Pages) do
+        if pageName ~= name then
+            page.Container.Visible = false
+        end
     end
     
-    -- 显示新页面
-    self.Animations.FadeIn(targetPage.Container, 0.3)
+    -- 显示目标页面
+    targetPage.Container.Visible = true
     self.CurrentPage = targetPage
 end
 
@@ -133,15 +138,14 @@ end
 function UIFramework:Show()
     self.ScreenGui.Enabled = true
     self.IsVisible = true
-    self.Animations.SlideIn(self.Container, "Bottom", 0.4)
+    print("[UIFramework] UI Shown")
 end
 
 -- 隐藏UI
 function UIFramework:Hide()
-    self.Animations.SlideOut(self.Container, "Bottom", 0.3, function()
-        self.ScreenGui.Enabled = false
-        self.IsVisible = false
-    end)
+    self.ScreenGui.Enabled = false
+    self.IsVisible = false
+    print("[UIFramework] UI Hidden")
 end
 
 -- 切换显示/隐藏
@@ -155,6 +159,7 @@ end
 
 -- 切换主题模式
 function UIFramework:SetTheme(mode)
+    print("[UIFramework] Setting theme to: " .. mode)
     self.Theme:SetMode(mode)
     self.Container.BackgroundColor3 = self.Theme:GetColor("Background")
     
@@ -164,8 +169,6 @@ function UIFramework:SetTheme(mode)
             page:UpdateTheme()
         end
     end
-    
-    self.TabBar:UpdateTheme()
 end
 
 -- 销毁UI
@@ -173,6 +176,7 @@ function UIFramework:Destroy()
     if self.ScreenGui then
         self.ScreenGui:Destroy()
     end
+    print("[UIFramework] Destroyed")
 end
 
 return UIFramework
