@@ -31,9 +31,7 @@ function UIFramework.new(config)
     self.CurrentPage = nil
     self.IsVisible = false
     
-    self:_Initialize()
-    
-    -- 加载组件
+    -- ⚠️ 先加载组件和导航模块，再初始化UI
     self.Components = {
         Button = _G.LoadUIModule("src/components/Button.lua"),
         Toggle = _G.LoadUIModule("src/components/Toggle.lua"),
@@ -43,11 +41,13 @@ function UIFramework.new(config)
         SegmentedControl = _G.LoadUIModule("src/components/SegmentedControl.lua"),
     }
     
-    -- 加载导航
     self.Navigation = {
         TabBar = _G.LoadUIModule("src/navigation/TabBar.lua"),
         PageManager = _G.LoadUIModule("src/navigation/PageManager.lua"),
     }
+    
+    -- 现在可以安全地初始化UI了
+    self:_Initialize()
     
     return self
 end
@@ -83,7 +83,7 @@ function UIFramework:_Initialize()
     self.PageContainer.BackgroundTransparency = 1
     self.PageContainer.Parent = self.Container
     
-    -- 初始化TabBar
+    -- 初始化TabBar（现在 self.Navigation 已经存在了）
     self.TabBar = self.Navigation.TabBar.new(self.Container, self.Theme)
     self.TabBar.OnTabChanged = function(tabName)
         self:ShowPage(tabName)
