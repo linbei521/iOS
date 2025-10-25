@@ -1,10 +1,10 @@
 --[[
     iOS风格UI框架加载器
     使用方法: 
-    local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/loader.lua"))()
+    local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/linbei521/iOS/main/loader.lua"))()
 ]]
 
-local GITHUB_BASE = "https://raw.githubusercontent.com/linbei521/iOS/refs/heads/main/"
+local GITHUB_BASE = "https://raw.githubusercontent.com/linbei521/iOS/main/"
 
 -- 模块缓存
 local LoadedModules = {}
