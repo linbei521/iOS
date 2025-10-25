@@ -1,26 +1,22 @@
-
----
-
-## 📁 src/
-
-### `src/UIFramework.lua`
-
-```lua
 --[[
     iOS风格UI框架 - 核心类
+    提供创建和管理UI的核心功能
 ]]
 
 local UIFramework = {}
 UIFramework.__index = UIFramework
 
+-- 服务引用
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
+-- 加载主题
 local Theme = _G.LoadUIModule("src/themes/iOS.lua")
 local Animations = _G.LoadUIModule("src/utils/Animations.lua")
 local ScreenAdapter = _G.LoadUIModule("src/utils/ScreenAdapter.lua")
 
+-- 创建新的UI实例
 function UIFramework.new(config)
     local self = setmetatable({}, UIFramework)
     
@@ -56,6 +52,7 @@ function UIFramework.new(config)
     return self
 end
 
+-- 初始化UI容器
 function UIFramework:_Initialize()
     -- 创建ScreenGui
     self.ScreenGui = Instance.new("ScreenGui")
@@ -70,6 +67,7 @@ function UIFramework:_Initialize()
     self.Container = Instance.new("Frame")
     self.Container.Name = "Container"
     self.Container.Size = UDim2.new(1, 0, 1, 0)
+    self.Container.Position = UDim2.new(0, 0, 0, 0)
     self.Container.BackgroundColor3 = self.Theme:GetColor("Background")
     self.Container.BorderSizePixel = 0
     self.Container.Parent = self.ScreenGui
@@ -92,6 +90,7 @@ function UIFramework:_Initialize()
     end
 end
 
+-- 创建页面
 function UIFramework:CreatePage(name, title, icon)
     if self.Pages[name] then
         return self.Pages[name]
@@ -112,6 +111,7 @@ function UIFramework:CreatePage(name, title, icon)
     return page.Container
 end
 
+-- 显示页面
 function UIFramework:ShowPage(name)
     local targetPage = self.Pages[name]
     if not targetPage then
@@ -129,12 +129,14 @@ function UIFramework:ShowPage(name)
     self.CurrentPage = targetPage
 end
 
+-- 显示UI
 function UIFramework:Show()
     self.ScreenGui.Enabled = true
     self.IsVisible = true
     self.Animations.SlideIn(self.Container, "Bottom", 0.4)
 end
 
+-- 隐藏UI
 function UIFramework:Hide()
     self.Animations.SlideOut(self.Container, "Bottom", 0.3, function()
         self.ScreenGui.Enabled = false
@@ -142,6 +144,7 @@ function UIFramework:Hide()
     end)
 end
 
+-- 切换显示/隐藏
 function UIFramework:Toggle()
     if self.IsVisible then
         self:Hide()
@@ -150,6 +153,7 @@ function UIFramework:Toggle()
     end
 end
 
+-- 切换主题模式
 function UIFramework:SetTheme(mode)
     self.Theme:SetMode(mode)
     self.Container.BackgroundColor3 = self.Theme:GetColor("Background")
@@ -164,6 +168,7 @@ function UIFramework:SetTheme(mode)
     self.TabBar:UpdateTheme()
 end
 
+-- 销毁UI
 function UIFramework:Destroy()
     if self.ScreenGui then
         self.ScreenGui:Destroy()
