@@ -1,5 +1,5 @@
 --[[
-    iOS风格UI框架 - 核心类（简化版）
+    iOS风格UI框架 - 核心类（简化版 + 整体缩放）
     暂时移除TabBar，先让基础功能运行
 ]]
 
@@ -27,6 +27,9 @@ function UIFramework.new(config)
     self.Theme = Theme
     self.Animations = Animations
     
+    -- ✅ 新增：UI缩放比例（可在创建时自定义）
+    self.UIScale = config.Scale or 0.7  -- 默认70%大小
+    
     self.Pages = {}
     self.CurrentPage = nil
     self.IsVisible = false
@@ -46,7 +49,7 @@ function UIFramework.new(config)
     -- 初始化UI
     self:_Initialize()
     
-    print("[UIFramework] Initialized: " .. self.Name)
+    print("[UIFramework] Initialized: " .. self.Name .. " (Scale: " .. (self.UIScale * 100) .. "%)")
     return self
 end
 
@@ -58,7 +61,7 @@ function UIFramework:_Initialize()
     self.ScreenGui.ResetOnSpawn = false
     self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     self.ScreenGui.IgnoreGuiInset = true
-    self.ScreenGui.Enabled = true  -- 默认显示
+    self.ScreenGui.Enabled = true
     self.ScreenGui.Parent = self.Parent
     
     -- 主容器
@@ -70,13 +73,21 @@ function UIFramework:_Initialize()
     self.Container.BorderSizePixel = 0
     self.Container.Parent = self.ScreenGui
     
+    -- ✅ 整体UI缩放
+    local uiScale = Instance.new("UIScale")
+    uiScale.Scale = self.UIScale
+    uiScale.Parent = self.Container
+    
+    -- 存储UIScale引用，方便后续动态调整
+    self.ScaleObject = uiScale
+    
     -- 安全区域适配
     ScreenAdapter.ApplySafeArea(self.Container)
     
-    -- 页面容器（暂时不留TabBar空间）
+    -- 页面容器
     self.PageContainer = Instance.new("Frame")
     self.PageContainer.Name = "PageContainer"
-    self.PageContainer.Size = UDim2.new(1, 0, 1, 0)  -- 全屏
+    self.PageContainer.Size = UDim2.new(1, 0, 1, 0)
     self.PageContainer.Position = UDim2.new(0, 0, 0, 0)
     self.PageContainer.BackgroundTransparency = 1
     self.PageContainer.Parent = self.Container
@@ -155,6 +166,25 @@ function UIFramework:Toggle()
     else
         self:Show()
     end
+end
+
+-- ✅ 新增：动态调整UI缩放
+function UIFramework:SetScale(scale)
+    if scale <= 0 or scale > 2 then
+        warn("[UIFramework] Invalid scale value. Use 0.1 to 2.0")
+        return
+    end
+    
+    self.UIScale = scale
+    if self.ScaleObject then
+        -- 带动画的缩放
+        local tween = TweenService:Create(self.ScaleObject, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+            Scale = scale
+        })
+        tween:Play()
+    end
+    
+    print("[UIFramework] UI Scale set to: " .. (scale * 100) .. "%")
 end
 
 -- 切换主题模式
